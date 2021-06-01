@@ -54,7 +54,7 @@
 #define DYC_COUNTDOWN			1103
 #define DYC_SCORE				1104
 #define DYC_CAPTHEALTH			1105
-#define DYC_SPAWNPROTECTION     1106
+#define DYC_SPAWNPROTECTION		1106
 #define DYC_CAPTSOUND			1107
 #define DYC_CHEATPROTECTION		1108
 #define DYC_LOGSPAWNSLOCATIONS	1109
@@ -67,13 +67,13 @@
 */
 ////////////////////////////////////////
 
-#define ZTEAM_RED            1
-#define ZTEAM_BLUE           0
-#define ZTEAM_GREEN          2
-#define ZTEAM_WHITE          3
-#define MAXTEAMS			 ZTEAM_WHITE+1
-#define MAXSPAWNS 			 100
-#define DEFAULT_TOTALTEAMS	 2
+#define ZTEAM_RED			1
+#define ZTEAM_BLUE			0
+#define ZTEAM_GREEN			2
+#define ZTEAM_WHITE			3
+#define MAXTEAMS			ZTEAM_WHITE+1
+#define MAXSPAWNS 			100
+#define DEFAULT_TOTALTEAMS	2
 
 bool gameStarted;
 bool callstartGame;
@@ -172,14 +172,14 @@ function bool PlayerAlive(int player)
 
 function int abs(int x)
 {
-    if (x<0) return -x;
-    return x;
+	if (x<0) return -x;
+	return x;
 }
 
 function int Distance(int object1, int object2)
 {
 	return ((abs(GetActorX(object1)-GetActorX(object2))>>16) +
-	        (abs(GetActorY(object1)-GetActorY(object2))>>16));
+			(abs(GetActorY(object1)-GetActorY(object2))>>16));
 }
 
 function int GetTeamTotal(int teamNum)
@@ -422,38 +422,38 @@ function bool RespawnPlayer(int player)
 
 ////////////////////////////////////////
 /*
-         === PLAYER HANDLING ===
+		 === PLAYER HANDLING ===
 */
 ////////////////////////////////////////
 
 script PLAYR_RESPAWN RESPAWN
 {
-    // This script must only call the script above. Do NOT add anything here.
-    ACS_executealways(PLAYR_REENTER, NONE);
+	// This script must only call the script above. Do NOT add anything here.
+	ACS_executealways(PLAYR_REENTER, NONE);
 }
 
 script PLAYR_DEATH DEATH
 {
-    // This script is run on player death. It must only call the script below.
-    // Do not do anything else here and yet again never call this script.
-    int player = PlayerNumber();
-    ACS_ExecuteAlways(PLAYR_RESETONDEATH, NONE, player);
+	// This script is run on player death. It must only call the script below.
+	// Do not do anything else here and yet again never call this script.
+	int player = PlayerNumber();
+	ACS_ExecuteAlways(PLAYR_RESETONDEATH, NONE, player);
 }
 
 script PLAYR_ENTER ENTER
 {
 	// === ONE-TIME INIT HERE ===
-    // This script must only be called ONCE when the player
-    // spawns in the game for the first time.
-    // Use this script for two kinds of things:
-    // 1. Print a welcome message
-    // 2. Init scripts which do not care about the player dying
-    //    and which run as long as the player is on the server.
-    // Do not do anything else here and never call this script.
-    int player = PlayerNumber();
-    
+	// This script must only be called ONCE when the player
+	// spawns in the game for the first time.
+	// Use this script for two kinds of things:
+	// 1. Print a welcome message
+	// 2. Init scripts which do not care about the player dying
+	//    and which run as long as the player is on the server.
+	// Do not do anything else here and never call this script.
+	int player = PlayerNumber();
+	
 	SetFont("BIGFONT");
-    HudMessage(s:"\cfWelcome to Defend Your Captain, \cj",n:SELF,s:"\cf!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);
+	HudMessage(s:"\cfWelcome to Defend Your Captain, \cj",n:SELF,s:"\cf!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);
 	
 	delay(2);
 }
@@ -461,20 +461,20 @@ script PLAYR_ENTER ENTER
 script PLAYR_REENTER ENTER
 {
 	// === EVERY [RE]ENTER INIT HERE ===
-    // This script is executed EACH TIME the player [re]spawns.
-    // Do not do anything else here and never call this script yourself.
-    int player = PlayerNumber();
+	// This script is executed EACH TIME the player [re]spawns.
+	// Do not do anything else here and never call this script yourself.
+	int player = PlayerNumber();
 	int oldTeamNum = isCaptainOnTeam(player);
 	int teamNum = GetPlayerTeam(player);
 	SetFont("BIGFONT");
 	
 	Delay(2);
-    Thing_ChangeTID(PlayerTag(player), NONE); // untag the corpse if present
+	Thing_ChangeTID(PlayerTag(player), NONE); // untag the corpse if present
 	Delay(1);
 	Thing_ChangeTID(SELF, PlayerTag(player)); // tag the player
 	
 	
-    Delay(2); // please keep it here
+	Delay(2); // please keep it here
 
 	if (gameStarted)
 	{		
@@ -509,8 +509,8 @@ script PLAYR_REENTER ENTER
 script PLAYR_RESETONDEATH (int player, int handle_disconnect)
 {
 	// === RESET ON DEATH HERE ===
-    // This script is supposed to be the central place where all player
-    // variables from other systems are reset when a player dies.
+	// This script is supposed to be the central place where all player
+	// variables from other systems are reset when a player dies.
 	
 	int oldTeamNum = isCaptainOnTeam(player);
 	int teamNum = GetPlayerTeam(player);
@@ -556,10 +556,10 @@ script PLAYR_RESETONDEATH (int player, int handle_disconnect)
 script PLAYR_DISCONNECT (int player) DISCONNECT
 {
 	//  === RESET ON DISCONNECT HERE ===
-    // This script is run on player disconnection.
-    // First of all, a disconnect is also considered a death so it
-    // executes the same reset code as the death script above does. 
-    ACS_ExecuteAlways(PLAYR_RESETONDEATH, NONE, player, true);
+	// This script is run on player disconnection.
+	// First of all, a disconnect is also considered a death so it
+	// executes the same reset code as the death script above does. 
+	ACS_ExecuteAlways(PLAYR_RESETONDEATH, NONE, player, true);
 
 }
 
