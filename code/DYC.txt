@@ -35,10 +35,10 @@
 #define MINPLAYERS				4
 
 // -- HUD messages --
-#define GLOBAL_MSG1 			200		// X = 0.50 Y = 0.30
+#define GLOBAL_MSG1				200		// X = 0.50 Y = 0.30
 #define GLOBAL_MSG2				201		// X = 0.50 Y = 0.40
 #define GLOBAL_MSG3				202		// X = 0.50 Y = 0.75
-
+		
 #define PLAYER_MSG1				300		// X = 0.5 Y = 0.65	
 
 // -- Script numbers --
@@ -56,7 +56,7 @@
 #define DYC_COUNTDOWN			1103
 #define DYC_SCORE				1104
 #define DYC_CAPTHEALTH			1105
-#define DYC_SPAWNPROTECTION     1106
+#define DYC_SPAWNPROTECTION		1106
 #define DYC_CAPTSOUND			1107
 #define DYC_CHEATPROTECTION		1108
 #define DYC_LOGSPAWNSLOCATIONS	1109
@@ -519,7 +519,8 @@ script PLAYR_REENTER ENTER
 						SetActorProperty(PlayerTag(player), APROP_DamageFactor, 1.0);
 					}
 						
-					HudMessage(s:"Arr! You are a ", s:teamColors[teamNum], s:captainStrings[teamNum], s:"!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_WHITE, 0.5, 0.65, 2.0, 0.2, 0.2);	
+					HudMessage(s:"Arr! You are a ", s:teamColors[teamNum], s:captainStrings[teamNum], 
+					s:"!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_WHITE, 0.5, 0.65, 2.0, 0.2, 0.2);	
 					//Client_ExecuteAlways(player, DYC_CAPTSOUND, 0);
 				}
 			}
@@ -554,7 +555,8 @@ script PLAYR_RESETONDEATH (int player, int handle_disconnect)
 				//if (!roundBased)
 				//{
 				Log(s:"[Notification] ", s:captainStrings[i], s:" dead or gone, picking new captain..");
-				//HudMessage(s:"\caYou changed teams whilst being captain on another team >:(!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);			
+				//HudMessage(s:"\caYou changed teams whilst being captain on another team >:(!"; 
+				//HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);			
 				
 				if (oldTeamNum != teamNum)
 					pickNewCaptain[oldTeamNum] = true;
@@ -906,7 +908,8 @@ script DYC_MAIN open
 			if (GetTeamTotal(i) < 2)
 			{
 				gameStarted = false;
-				HudMessageBold(s:"\cjNot enough players left on the ", s:teamColors[i], s:teamNames[i], s:"\cj!"; HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 400.0, 300.0, 3.0, 0.5, 0.5);
+				HudMessageBold(s:"\cjNot enough players left on the ", s:teamColors[i], s:teamNames[i], s:"\cj!"; 
+				HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 400.0, 300.0, 3.0, 0.5, 0.5);
 				//Delay(1*SEC);
 				Log(s:"[Notification] Not enough players on the ", s:teamColors[i], s:teamNames[i], s:"\cj! let's exit..");
 				Delay(5*SEC);
@@ -918,7 +921,8 @@ script DYC_MAIN open
 			{
 				int hp = GetActorProperty (PlayerTag(teamCaptain[i]), APROP_Health);
 				ACS_ExecuteAlways(DYC_CAPHPDISPLAY, 0, hp, capmaxhp, i);
-				//HudMessageBold (s:teamColors[i], n:teamCaptain[i]+1, s:" ", d:hp, s:" / ", d:capmaxhp; HUDMSG_FADEOUT, 2000+i, CR_WHITE, 1.0, 300.0+(i*10.0), 1.0, 1.0);	
+				//HudMessageBold (s:teamColors[i], n:teamCaptain[i]+1, s:" ", d:hp, s:" / ", d:capmaxhp; 
+				//HUDMSG_FADEOUT, 2000+i, CR_WHITE, 1.0, 300.0+(i*10.0), 1.0, 1.0);	
 			}
 		}	
 		delay(1);
@@ -949,7 +953,9 @@ script DYC_SCORE (int CaptainTeamNum)
 		if (isCaptain(player)
 			&& GetCvar("sv_captaindoublescore") > 0)
 		{
-			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], s:" captain killed another captain!\n", s:teamColors[teamNum], s:"Score +2"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 0.5, 0.40, 2.0, 0.2, 0.2);
+			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], s:" captain killed another captain!\n", s:teamColors[teamNum], s:"Score +2"; 
+			HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 0.5, 0.40, 2.0, 0.2, 0.2);
+			
 			SetTeamScore(teamNum, GetTeamScore(teamNum) + 2);
 			AmbientSound("ann/doublepoints", 127);	
 			scoredDouble = true;
