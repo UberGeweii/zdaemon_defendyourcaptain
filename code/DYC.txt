@@ -3,77 +3,81 @@
 #include "zcommon.acs"
 #include "zdaemon.acs"
 
-/*
-	TODO 
-	Add pirate hat to hud
-	Add captain damage factor cvar
-	Take inventory items on roundbased games?
-	Relocate "captain gone" detection to a more "global" place.
-*/
+// TODO 
+// add pirate hat to hud.
+// take inventory items on roundbased games?
+
+// Note: Roundbased mode is still a bit bugged.
+// Fix applied, needs a check still.
+
+// Cvar sv_dmgfactormode added, instead of giving the captain extra health it's damagefactor is being altered.
+// I might actually switch to that permanently.
 
 ////////////////////////////////////////
 /*
-           === DEFINES ===
+			=== DEFINES ===
 */
 ////////////////////////////////////////
 
-#define NULL                    0
-#define NONE                    0
-#define SELF                    0
+#define NULL					0
+#define NONE					0
+#define SELF					0
 
-#define SEC                     35
+#define SEC						35
 
-#define PLAYERTIDBASE           12000
-#define CAPTAINHATTIDBASE       13000
+#define PLAYERTIDBASE			12000
+#define CAPTAINHATTIDBASE		13000
 
-#define TRANSLATIONBASE         100
+#define TRANSLATIONBASE			100
 
 // -- Gamemode settings --
-#define MAXPLAYERS              100
-#define MINPLAYERS              4
+#define MAXPLAYERS				100
+#define MINPLAYERS				4
 
 // -- HUD messages --
-#define GLOBAL_MSG1             200  // X = 0.50 Y = 0.30
-#define GLOBAL_MSG2             201  // X = 0.50 Y = 0.40
-#define GLOBAL_MSG3             202  // X = 0.50 Y = 0.75
+#define GLOBAL_MSG1 			200		// X = 0.50 Y = 0.30
+#define GLOBAL_MSG2				201		// X = 0.50 Y = 0.40
+#define GLOBAL_MSG3				202		// X = 0.50 Y = 0.75
 
-#define PLAYER_MSG1             300  // X = 0.5 Y = 0.65	
+#define PLAYER_MSG1				300		// X = 0.5 Y = 0.65	
 
 // -- Script numbers --
 
-#define PLAYR_RESPAWN           1000
-#define PLAYR_DEATH             1001
-#define PLAYR_RESETONDEATH      1002
-#define PLAYR_ENTER             1003
-#define PLAYR_REENTER           1004
-#define PLAYR_DISCONNECT        1005
+#define PLAYR_RESPAWN			1000
+#define PLAYR_DEATH				1001
+#define PLAYR_RESETONDEATH		1002		
+#define PLAYR_ENTER				1003
+#define PLAYR_REENTER			1004
+#define PLAYR_DISCONNECT		1005
 
-#define DYC_WAITFORPLAYERS      1100
-#define DYC_CAPTAINPICKER       1101
-#define DYC_MAIN                1102
-#define DYC_COUNTDOWN           1103
-#define DYC_SCORE               1104
-#define DYC_CAPTHEALTH          1105
+#define DYC_WAITFORPLAYERS		1100
+#define DYC_CAPTAINPICKER		1101
+#define DYC_MAIN				1102
+#define DYC_COUNTDOWN			1103
+#define DYC_SCORE				1104
+#define DYC_CAPTHEALTH			1105
 #define DYC_SPAWNPROTECTION     1106
-#define DYC_CAPTSOUND           1107
-#define DYC_CHEATPROTECTION     1108
-#define DYC_LOGSPAWNSLOCATIONS  1109
-#define DYC_ROUNDEMULATOR       1110
-#define DYC_RESPAWNLOCCHECK     1111
+#define DYC_CAPTSOUND			1107
+#define DYC_CHEATPROTECTION		1108
+#define DYC_LOGSPAWNSLOCATIONS	1109
+#define DYC_ROUNDEMULATOR		1110
+#define DYC_RESPAWNLOCCHECK		1111
+#define DYC_MOVEMENTBLOCKER		1112
+#define DYC_CAPHPDISPLAY		1113
 
 ////////////////////////////////////////
 /*
-       === GAMEMODE VARIABLES ===
+		=== GAMEMODE VARIABLES ===
 */
 ////////////////////////////////////////
 
-#define ZTEAM_RED           1
-#define ZTEAM_BLUE          0
-#define ZTEAM_GREEN         2
-#define ZTEAM_WHITE         3
-#define MAXTEAMS            ZTEAM_WHITE+1
-#define MAXSPAWNS           100
-#define DEFAULT_TOTALTEAMS  2
+#define ZTEAM_RED				1
+#define ZTEAM_BLUE				0
+#define ZTEAM_GREEN				2
+#define ZTEAM_WHITE				3
+#define MAXTEAMS				ZTEAM_WHITE+1
+#define MAXSPAWNS				100
+#define DEFAULT_TOTALTEAMS		2
 
 bool gameStarted;
 bool callstartGame;
@@ -81,7 +85,6 @@ bool startGame;
 bool callNewRound;
 bool roundBased;
 bool noTeamRespawn;
-bool spawnProtection;
 int teamsReady;
 int totalTeams;
 
@@ -128,7 +131,7 @@ str teamScoreSounds[MAXTEAMS] = {
 	"ann/white_score"
 };
 
-str countdownSounds[11] = {
+str countdownSounds[10] = {
 	"ann/number_01",
 	"ann/number_02",
 	"ann/number_03",
@@ -138,7 +141,7 @@ str countdownSounds[11] = {
 	"ann/number_07",
 	"ann/number_08",
 	"ann/number_09",
-	"ann/number_10"
+	"ann/number_10",
 };
 
 // Team captain for each team.
@@ -155,7 +158,7 @@ int helperArray2[MAXSPAWNS];
 
 ////////////////////////////////////////
 /*
-           === FUNCTIONS ===
+			=== FUNCTIONS ===
 */
 ////////////////////////////////////////
 
@@ -187,7 +190,7 @@ function int GetTeamTotal(int teamNum)
 	int i;
 	int out = 0;
 	
-	for (i = 0; i < PlayerTopIndex()+1; i++)
+	for (i = 0; i <= PlayerTopIndex(); i++)
 	{
 		if (GetPlayerInfo(i, PLAYERINFO_TEAM) == teamStrings[teamNum])
 			out++;
@@ -202,7 +205,7 @@ function int GetTeamTotalAlive(int teamNum)
 	int i;
 	int out = 0;
 	
-	for (i = 0; i < PlayerTopIndex()+1; i++)
+	for (i = 0; i <= PlayerTopIndex(); i++)
 	{
 		if (GetPlayerInfo(i, PLAYERINFO_TEAM) == teamStrings[teamNum]
 			&& PlayerAlive(i))
@@ -274,7 +277,7 @@ function bool PickCaptain(int teamNum)
 		}
 		
 		// Add every living player to the helper array (pool).
-		for (i = 0; i < PlayerTopIndex()+1; i++)
+		for (i = 0; i <= PlayerTopIndex(); i++)
 		{
 			// We've got someone..
 			if (GetPlayerTeam(i) == teamStrings[teamNum] 
@@ -282,7 +285,7 @@ function bool PickCaptain(int teamNum)
 			{
 				helperArray[curPoolSlot] = i; //Store playernumber.
 				
-				if (curPoolSlot < PlayerTopIndex()+1) 
+				if (curPoolSlot <= PlayerTopIndex()) 
 					curPoolSlot++;
 			}
 		}
@@ -342,8 +345,19 @@ function bool PickCaptain(int teamNum)
 			Log(s:teamColors[teamNum], s:"Succesfully picked a captain: ", n:newCaptain+1, s:" as a ", s:captainStrings[teamNum], s:"!");
 			
 		SetThingSpecial(PlayerTag(teamCaptain[teamNum]), 226, DYC_SCORE, 0, teamNum);
-		Client_ExecuteAlways(newCaptain, DYC_CAPTSOUND, 0);
-		SetActorProperty(PlayerTag(teamCaptain[teamNum]), APROP_Health, capmaxhp);
+		//Client_ExecuteAlways(newCaptain, DYC_CAPTSOUND, 0);
+		
+		if (GetCVar("sv_dmgfactormode"))
+		{
+			SetActorProperty(PlayerTag(teamCaptain[teamNum]), APROP_Health, 200);
+			SetActorProperty(PlayerTag(teamCaptain[teamNum]), APROP_DamageFactor, 0.35);
+		}
+		else
+		{
+			SetActorProperty(PlayerTag(teamCaptain[teamNum]), APROP_Health, capmaxhp);
+			SetActorProperty(PlayerTag(teamCaptain[teamNum]), APROP_DamageFactor, 1.0);
+		}
+			
 		pickNewCaptain[teamNum] = false;
 	}
 	else
@@ -422,7 +436,7 @@ function bool RespawnPlayer(int player)
 
 ////////////////////////////////////////
 /*
-        === PLAYER HANDLING ===
+		=== PLAYER HANDLING ===
 */
 ////////////////////////////////////////
 
@@ -451,7 +465,7 @@ script PLAYR_ENTER ENTER
 	//    and which run as long as the player is on the server.
 	// Do not do anything else here and never call this script.
 	int player = PlayerNumber();
-	
+
 	SetFont("BIGFONT");
 	HudMessage(s:"\cfWelcome to Defend Your Captain, \cj",n:SELF,s:"\cf!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);
 	
@@ -473,9 +487,13 @@ script PLAYR_REENTER ENTER
 	Delay(1);
 	Thing_ChangeTID(SELF, PlayerTag(player)); // tag the player
 	
-	
 	Delay(2); // please keep it here
-
+/*
+	if (callNewRound)
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	else
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+*/		
 	if (gameStarted)
 	{		
 		if (isCaptain(player))
@@ -489,11 +507,20 @@ script PLAYR_REENTER ENTER
 			else
 			{
 				if (!callNewRound)
-				{
-					SetActorProperty(PlayerTag(player), APROP_Health, capmaxhp);
-					HudMessage(s:"Arr! You are a ", s:teamColors[teamNum], s:captainStrings[teamNum], s:"!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_WHITE, 0.5, 0.65, 2.0, 0.2, 0.2);
-			
-					Client_ExecuteAlways(player, DYC_CAPTSOUND, 0);
+				{					
+					if (GetCVar("sv_dmgfactormode"))
+					{
+						SetActorProperty(PlayerTag(player), APROP_Health, 200);
+						SetActorProperty(PlayerTag(player), APROP_DamageFactor, 0.35);
+					}
+					else
+					{
+						SetActorProperty(PlayerTag(player), APROP_Health, capmaxhp);
+						SetActorProperty(PlayerTag(player), APROP_DamageFactor, 1.0);
+					}
+						
+					HudMessage(s:"Arr! You are a ", s:teamColors[teamNum], s:captainStrings[teamNum], s:"!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_WHITE, 0.5, 0.65, 2.0, 0.2, 0.2);	
+					//Client_ExecuteAlways(player, DYC_CAPTSOUND, 0);
 				}
 			}
 		}
@@ -516,29 +543,24 @@ script PLAYR_RESETONDEATH (int player, int handle_disconnect)
 	int teamNum = GetPlayerTeam(player);
 	
 	if (gameStarted
-		&& (GetCvar("sv_alwaysnewcaptain")
-			|| handle_disconnect
-			|| oldTeamNum > -1))
+		&& (GetCvar("sv_alwaysnewcaptain") 
+			|| handle_disconnect)
+			|| oldTeamNum > -1)
 	{		
 		for (int i = 0; i < totalTeams; i++)
 		{
-			if (teamCaptain[i] == player)	
-			{
-				if (!roundBased)
-				{
-					if(GetCvar("sv_alwaysnewcaptain"))
-					{
-						if (oldTeamNum != teamNum)
-							pickNewCaptain[oldTeamNum] = true;
-						else
-							pickNewCaptain[teamNum] = true;
-					}
-				}
+			if (teamCaptain[i] == player)
+			{	
+				//if (!roundBased)
+				//{
+				Log(s:"[Notification] ", s:captainStrings[i], s:" dead or gone, picking new captain..");
+				//HudMessage(s:"\caYou changed teams whilst being captain on another team >:(!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);			
+				
+				if (oldTeamNum != teamNum)
+					pickNewCaptain[oldTeamNum] = true;
 				else
-				{
-					callNewRound = true;
-				}
-						
+					pickNewCaptain[teamNum] = true;
+				//}								
 				break;
 			}
 		}
@@ -565,12 +587,13 @@ script PLAYR_DISCONNECT (int player) DISCONNECT
 
 ////////////////////////////////////////
 /*
-           === GAMEMODE ===
+			=== GAMEMODE ===
 */
 ////////////////////////////////////////
 
 script DYC_CAPTSOUND (void)
 {
+	Delay(1*SEC);
 	LocalAmbientSound("ann/youarecaptain", 127);
 }
 
@@ -581,8 +604,7 @@ script DYC_WAITFORPLAYERS open
 	while(!callStartGame)
 	{
 		// Wait for players to join..
-		HudMessageBold(s:"\cfA minimum of \cj2 \cfplayers per team needed!"; 
-		HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 0.5);
+		HudMessageBold(s:"\cfA minimum of \cj2 \cfplayers per team needed!"; HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 0.5);
 		delay(2*SEC);
 	}
 }
@@ -594,17 +616,31 @@ script DYC_COUNTDOWN (void)
 	while(!startGame)
 	{		
 		if (callStartGame)
-		{		
+		{
+			AmbientSound(countdownSounds[10], 127);
+		
 			for (int i=10; i > 0; i--)
 			{
-				HudMessageBold(s:"\cfGame starts in \cj", d:i, s:"\cf .."; 
-				HUDMSG_PLAIN, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 1.2);
+				HudMessageBold(s:"\cfGame starts in \cj", d:i, s:"\cf .."; HUDMSG_PLAIN, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 1.2);
 				AmbientSound(countdownSounds[i-1], 127);
 				delay(1*SEC);
+				
+				if(i == 1)
+				{
+					startGame = true;
+				
+					if (!noTeamRespawn
+						|| GetCvar("sv_forceteamrespawn") > 0)
+					{
+						for (int j = 0; j <= PlayerTopIndex(); j++)	
+						{
+							while (!RespawnPlayer(j))
+								delay(1);
+						}
+					}			
+					terminate;
+				}
 			}
-			
-			startGame = true;
-			terminate;
 		}
 		delay(1);
 	}
@@ -644,9 +680,7 @@ script DYC_ROUNDEMULATOR open
 	{
 		if (callNewRound)
 		{
-			spawnProtection = true;
-			delay(1);
-			ACS_Execute(DYC_SPAWNPROTECTION, 0);
+			ACS_Execute(DYC_MOVEMENTBLOCKER, 0);
 			
 			delay(2*SEC);
 			
@@ -654,29 +688,29 @@ script DYC_ROUNDEMULATOR open
 			
 			delay(2*SEC);
 			
-			for (i=3; i > 0; i--)
+			for (i=5; i > 0; i--)
 			{
 				if (startGame)
 				{
-					HudMessageBold(s:"\cfNew round in \cj", d:i, s:"\cf .."; 
-					HUDMSG_PLAIN, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 1.2);
+					HudMessageBold(s:"\cfNew round in \cj", d:i, s:"\cf .."; HUDMSG_PLAIN, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 1.2);
 					AmbientSound(countdownSounds[i-1], 127);
 					delay(1*SEC);
+				
+					if (i <= 1)
+					{
+						//SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
+						AmbientSound("misc/fight", 127);
+					}
 				}
 			}
 			
-			AmbientSound("misc/fight", 127);
-			
 			if (!noTeamRespawn
-				|| GetCvar("sv_forceteamrespawn"))
+				|| GetCvar("sv_forceteamrespawn") > 0)
 			{
-				for (i = 0; i < PlayerTopIndex()+1; i++)	
+				for (i = 0; i <= PlayerTopIndex(); i++)	
 				{
-					while (PlayerAlive(i) 
-						&& !RespawnPlayer(i))
-					{
+					while (!RespawnPlayer(i))
 						delay(1);
-					}
 				}
 			}
 			
@@ -687,20 +721,52 @@ script DYC_ROUNDEMULATOR open
 			}
 			else
 			{
-				for (i = 0; i < PlayerTopIndex()+1; i++)
+				for (i = 0; i <= PlayerTopIndex(); i++)
 				{
 					if (isCaptain(i))
-						SetActorProperty (PlayerTag(i), APROP_Health, capmaxhp);
+					{
+						if (GetCVar("sv_dmgfactormode"))
+						{
+							SetActorProperty(PlayerTag(i), APROP_Health, 200);
+							SetActorProperty(PlayerTag(i), APROP_DamageFactor, 0.35);
+						}
+						else
+						{
+							SetActorProperty(PlayerTag(i), APROP_Health, capmaxhp);
+							SetActorProperty(PlayerTag(i), APROP_DamageFactor, 1.0);
+						}
+					}
 					else
+					{
+						SetActorProperty(PlayerTag(i), APROP_DamageFactor, 1.0);
 						SetActorProperty (PlayerTag(i), APROP_Health, 100);
+					}
 				}
 			}
-			spawnProtection = false;
+			
+			//SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
+			
 			callNewRound = false;		
 		}
 		
 		delay(1);
 	}
+}
+
+script DYC_MOVEMENTBLOCKER (void)
+{
+	while (gameStarted)
+	{
+		if (callNewRound)
+			SetPlayerProperty(1, 1, PROP_TOTALLYFROZEN);
+		else
+			SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
+			
+		Delay(5);
+	}
+
+	Delay(1*SEC);
+	SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
 }
 	
 script DYC_MAIN open
@@ -725,10 +791,18 @@ script DYC_MAIN open
 	CreateTranslation (TRANSLATIONBASE+ZTEAM_WHITE, 112:127=80:95);
 	CreateTranslation (TRANSLATIONBASE+ZTEAM_BLUE, 112:127=199:207);
 	CreateTranslation (TRANSLATIONBASE+ZTEAM_GREEN, 112:127=112:127);
-	
-	if (GetCvar("sv_maxhp") > 0)
-		capmaxhp = GetCvar("sv_maxhp");	
-	
+
+	// What mode?
+	if (GetCvar("sv_dmgfactormode") > 0)
+	{
+		capmaxhp = 200;
+	}
+	else
+	{
+		if (GetCvar("sv_maxhp") > 0)
+			capmaxhp = GetCvar("sv_maxhp");
+	}
+		
 	// Time to prepare..
 	while (!startGame)
 	{	
@@ -775,18 +849,16 @@ script DYC_MAIN open
 		}
 		else
 		{
-			Log(s:"\cg[ERROR]\cj Something went wrong assigning the ", 
-			s:captainStrings[i], s:"!");
-			
-			HudMessageBold(s:"\cjSomething went wront picking a captain!"; 
-			HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 3.0, 0.5, 0.5);
+			Log(s:"\cg(ERROR)\cj Something went wrong assigning the ", s:captainStrings[i], s:"!");
+			HudMessageBold(s:"\cjSomething went wront picking a captain!"; HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 400.0, 300.0, 3.0, 0.5, 0.5);
 			Delay(5*SEC);
 			
 			Exit_Normal(0);
 			terminate;
 		}
 	}
-
+	
+	//delay(1*SEC);
 	AmbientSound("misc/fight", 127);	
 	gameStarted = true;	
 	delay(1);
@@ -795,19 +867,6 @@ script DYC_MAIN open
 	{
 		ACS_Execute(DYC_ROUNDEMULATOR, 0);
 		roundBased = true;
-		
-		if (!noTeamRespawn
-			|| GetCvar("sv_forceteamrespawn"))
-		{
-			for (i = 0; i < PlayerTopIndex()+1; i++)	
-			{
-				while (PlayerAlive(i) 
-					&& !RespawnPlayer(i))
-				{
-					delay(1);
-				}
-			}
-		}
 	}
 	
 	while (gameStarted)
@@ -818,12 +877,7 @@ script DYC_MAIN open
 				&& PlayerAlive(teamCaptain[i]))
 			{
 				SetThingSpecial(PlayerTag(teamCaptain[i]), 226, DYC_SCORE, 0, i);
-				SetActorPosition(CAPTAINHATTIDBASE+i, 
-					GetActorX(PlayerTag(teamCaptain[i])), 
-					GetActorY(PlayerTag(teamCaptain[i])), 
-					GetActorZ(PlayerTag(teamCaptain[i])) 
-					+ (GetActorProperty(PlayerTag(teamCaptain[i]), APROP_Height) 
-					+ ( 8 >> 16 )), 0);
+				SetActorPosition(CAPTAINHATTIDBASE+i, GetActorX(PlayerTag(teamCaptain[i])), GetActorY(PlayerTag(teamCaptain[i])), GetActorZ(PlayerTag(teamCaptain[i])) + (GetActorProperty(PlayerTag(teamCaptain[i]), APROP_Height) + ( 8 >> 16 )), 0);
 				
 				if(!ThingCount(0, CAPTAINHATTIDBASE+i))
 				{
@@ -842,8 +896,6 @@ script DYC_MAIN open
 					callNewRound = true;
 				}
 				
-				// I always planned to have this at a more "global" place
-				// But it's just not feasible. 
 				if (GetCvar("sv_debugmode2"))
 				{
 					pickNewCaptain[i] = true;
@@ -854,13 +906,9 @@ script DYC_MAIN open
 			if (GetTeamTotal(i) < 2)
 			{
 				gameStarted = false;
-				Log(s:"[Notification] Not enough players on the ", 
-				s:teamColors[i], s:teamNames[i], s:"\cj! let's exit..");
-				
-				HudMessageBold(s:"\cjNot enough players left on the ", 
-				s:teamColors[i], s:teamNames[i], s:"\cj!"; 
-				HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 0.5, 0.30, 3.0, 0.5, 0.5);
-				
+				HudMessageBold(s:"\cjNot enough players left on the ", s:teamColors[i], s:teamNames[i], s:"\cj!"; HUDMSG_FADEINOUT, GLOBAL_MSG1, CR_WHITE, 400.0, 300.0, 3.0, 0.5, 0.5);
+				//Delay(1*SEC);
+				Log(s:"[Notification] Not enough players on the ", s:teamColors[i], s:teamNames[i], s:"\cj! let's exit..");
 				Delay(5*SEC);
 				Exit_Normal(0);
 				terminate;
@@ -868,22 +916,27 @@ script DYC_MAIN open
 			
 			if (!callNewRound)
 			{
-				SetFont("SMALLFONT");
 				int hp = GetActorProperty (PlayerTag(teamCaptain[i]), APROP_Health);
-				
-				HudMessageBold (s:teamColors[i], n:teamCaptain[i]+1, 
-				s:" ", d:hp, s:" / ", d:capmaxhp; 
-				HUDMSG_FADEOUT, 2000+i, CR_WHITE, 1.0, 300.0+(i*10.0), 1.0, 1.0);	
+				ACS_ExecuteAlways(DYC_CAPHPDISPLAY, 0, hp, capmaxhp, i);
+				//HudMessageBold (s:teamColors[i], n:teamCaptain[i]+1, s:" ", d:hp, s:" / ", d:capmaxhp; HUDMSG_FADEOUT, 2000+i, CR_WHITE, 1.0, 300.0+(i*10.0), 1.0, 1.0);	
 			}
 		}	
 		delay(1);
 	}
 }
 
+script DYC_CAPHPDISPLAY (int hp, int caphp, int team)
+{
+	SetFont("SMALLFONT");
+	SetHudSize (800,600, FALSE);
+	HudMessageBold (s:teamColors[team], n:teamCaptain[team]+1, s:" ", d:hp, s:" / ", d:caphp; HUDMSG_FADEOUT, 2000+team, CR_WHITE, 1.0, 300.0+(team*10.0), 1.0, 1.0);	
+}
+
 script DYC_SCORE (int CaptainTeamNum)
 {
 	int player = PlayerNumber();	
 	int teamNum = GetPlayerTeam(player);
+	bool scoredDouble = false;
 	
 	SetFont("BIGFONT");
 
@@ -891,32 +944,30 @@ script DYC_SCORE (int CaptainTeamNum)
 		&& !callNewRound
 		&& CaptainTeamNum != teamNum)
 	{		
-		//HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], 
-		//s:" Scores!"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 1.5, 0.40, 2.0, 0.2, 0.2);
-		
-		AmbientSound(teamScoreSounds[teamNum], 127);
-		
+		HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], s:" Scores!"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 0.5, 0.40, 2.0, 0.2, 0.2);
+			
 		if (isCaptain(player)
-			&& GetCvar("sv_captaindoublescore"))
+			&& GetCvar("sv_captaindoublescore") > 0)
 		{
-			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], 
-			s:" captain scores!\n\n", s:teamColors[teamNum], 
-			s:"Score +2"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 1.5, 0.40, 2.0, 0.2, 0.2);
-			
-			Log(s:"[Notification] ", s:teamColors[teamNum], 
-			s:captainStrings[teamNum], s:"\cj killed another captain, score +2!");
-			
+			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], s:" captain killed another captain!\n", s:teamColors[teamNum], s:"Score +2"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 0.5, 0.40, 2.0, 0.2, 0.2);
 			SetTeamScore(teamNum, GetTeamScore(teamNum) + 2);
+			AmbientSound("ann/doublepoints", 127);	
+			scoredDouble = true;
 		}
 		else
 		{
-			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], 
-			s:" Scores!"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 1.5, 0.40, 2.0, 0.2, 0.2);
-			
-			Log(s:"[Notification] ", s:teamColors[teamNum], 
-			n:player+1, s:"\cj scores!");
-			
+			HudMessage(s:teamColors[teamNum], s:teamNames[teamNum], s:" Scores!"; HUDMSG_FADEINOUT, GLOBAL_MSG2, CR_WHITE, 0.5, 0.40, 2.0, 0.2, 0.2);
 			SetTeamScore(teamNum, GetTeamScore(teamNum) + 1);
+		}
+		
+		if (scoredDouble)
+		{
+			AmbientSound("ann/doublepoints", 127);
+			scoredDouble = false;
+		}
+		else
+		{
+			AmbientSound(teamScoreSounds[teamNum], 127);
 		}
 		
 		if (roundBased)
@@ -931,9 +982,7 @@ script DYC_SCORE (int CaptainTeamNum)
 		{
 			if (GetCvar("sv_newroundonsuicide"))
 			{
-				Log(s:"[Notification] ", s:teamColors[teamNum], 
-				s:captainStrings[teamNum], s:"\cj suicided, calling new round..");
-				
+				Log(s:"[Notification] ", s:teamColors[teamNum], s:captainStrings[teamNum], s:"\cj suicided, calling new round..");
 				callNewRound = true;
 			}
 		}
@@ -941,9 +990,7 @@ script DYC_SCORE (int CaptainTeamNum)
 		{
 			if (GetCvar("sv_alwaysnewcaptain"))
 			{
-				Log(s:"[Notification] ", s:teamColors[teamNum], 
-				s:captainStrings[teamNum], s:"\cj suicided, picking new captain..");
-				
+				Log(s:"[Notification] ", s:teamColors[teamNum], s:captainStrings[teamNum], s:"\cj suicided, picking new captain..");
 				pickNewCaptain[teamNum] = true;
 			}
 		}
@@ -958,6 +1005,7 @@ Script DYC_CAPTHEALTH (void)
 	int player = PlayerNumber();
 	int teamNum = GetPlayerTeam(player);
 	int ctid;
+	bool sndPlayed = false;
 	
 	// Wait for the game to start.
 	while(!gameStarted && PlayerAlive(player))
@@ -987,6 +1035,11 @@ Script DYC_CAPTHEALTH (void)
 			
 			SetFont("BIGFONT");
 			
+			if (GetCvar("sv_dmgfactormode") > 0)
+			{
+				capmaxhp = 200;
+			}
+			
 			hdisp = (caphp * 100 / capmaxhp);
 			if (hdisp <= 0)
 				hdisp = 0;
@@ -994,12 +1047,20 @@ Script DYC_CAPTHEALTH (void)
 			SetHudSize (800,600, FALSE);
 			
 			if (ctid == PlayerTag(player))
-				HudMessage (s:teamColors[teamNum], s:"You are the Captain!"; 
-				HUDMSG_FADEOUT, 100, CR_WHITE, 400.0, 90.0, 1.0, 1.0);
+			{
+				if (!sndPlayed)
+				{
+					Client_ExecuteAlways(player, DYC_CAPTSOUND, 0);
+					sndPlayed = true;
+				}
+				HudMessage (s:teamColors[teamNum], s:"You are the captain!"; HUDMSG_FADEOUT, 100, CR_WHITE, 400.0, 90.0, 1.0, 1.0);
+			}
 			else
-				HudMessage (s:teamColors[teamNum], n:(ctid-PLAYERTIDBASE)+1, s:" is the Captain!"; 
-				HUDMSG_FADEOUT, 100, CR_WHITE, 400.0, 90.0, 1.0, 1.0);
-				
+			{
+				sndPlayed = false;
+				HudMessage (s:teamColors[teamNum], n:(ctid-PLAYERTIDBASE)+1, s:" is the captain!"; HUDMSG_FADEOUT, 100, CR_WHITE, 400.0, 90.0, 1.0, 1.0);
+			}
+			
 			HudMessage (i:hdisp, s:"%"; HUDMSG_FADEOUT, 101, CR_WHITE, 400.0, 120.0, 1.0, 1.0);
 			
 			int acounter;
@@ -1039,11 +1100,10 @@ script DYC_SPAWNPROTECTION open
 	int i;
 	
 	SetFont("BIGFONT");
-
-	while(!gameStarted
-		|| spawnProtection)
+	
+	while(!gameStarted)
 	{			
-		for (i = 0; i < PlayerTopIndex()+1; i++)	
+		for (i = 0; i <= PlayerTopIndex(); i++)	
 			SetActorProperty (PlayerTag(i), APROP_Health, 666);
 			
 		HudMessageBold(s:"Spawn protection"; HUDMSG_PLAIN, GLOBAL_MSG3, CR_WHITE, 0.5, 0.75, 1.0);
@@ -1054,12 +1114,26 @@ script DYC_SPAWNPROTECTION open
 	HudMessageBold(s:"Spawn protection"; HUDMSG_FADEOUT, GLOBAL_MSG3, CR_WHITE, 0.5, 0.75, 0.5, 0.2, 0.2);
 	
 	// Restore.
-	for (i = 0; i < PlayerTopIndex()+1; i++)
+	for (i = 0; i <= PlayerTopIndex(); i++)
 	{
 		if (!isCaptain(i))
+		{
 			SetActorProperty (PlayerTag(i), APROP_Health, 100);
+			SetActorProperty(PlayerTag(i), APROP_DamageFactor, 1.0);
+		}
 		else
-			SetActorProperty (PlayerTag(i), APROP_Health, capmaxhp);
+		{
+			if (GetCVar("sv_dmgfactormode"))
+			{
+				SetActorProperty (PlayerTag(i), APROP_Health, 200);
+				SetActorProperty(PlayerTag(i), APROP_DamageFactor, 0.35);
+			}
+			else
+			{
+				SetActorProperty(PlayerTag(i), APROP_DamageFactor, 1.0);
+				SetActorProperty(PlayerTag(i), APROP_Health, capmaxhp);
+			}
+		}
 	}
 	
 }
@@ -1076,16 +1150,12 @@ script DYC_CHEATPROTECTION (int player, int teamNum)
 		{
 			if (!roundBased)
 			{
-				Log(s:"[Notification] ", s:captainStrings[teamNum], 
-				s:" remained dead for too long, picking new captain..");
-				
+				Log(s:"[Notification] ", s:captainStrings[teamNum], s:" remained dead for too long, picking new captain..");			
 				pickNewCaptain[teamNum] = true;
 			}
 			else
 			{
-				Log(s:"[Notification] ", s:captainStrings[teamNum], 
-				s:" remained dead for too long, calling new round..");
-				
+				Log(s:"[Notification] ", s:captainStrings[teamNum], s:" remained dead for too long, calling new round..");
 				callNewRound = true;
 			}
 					
@@ -1101,7 +1171,8 @@ script DYC_LOGSPAWNSLOCATIONS enter
 {
 	int player = PlayerNumber();
 	int teamNum = GetPlayerTeam(player);
-	
+
+/*	
 	if(gameStarted
 		&& (roundBased
 			|| noTeamRespawn))
@@ -1109,16 +1180,20 @@ script DYC_LOGSPAWNSLOCATIONS enter
 		while (!RespawnPlayer(player))
 			delay(1);
 	}
-	
+*/	
 	int x, y, z;
 		
 	x = GetActorX(0);
-	y = GetActorY(0);
+	y = GetActorY(0);	
 	z = GetActorZ(0);
+	
+	//if (GetCvar("sv_debugmode"))	
+	//	Log(s:teamColors[teamNum], s:"[DEBUG] EXECUTED FOR: ", n:player+1, s:"spawnspot (x: ", d:x, s:", y: ", d:y, s:", z: ", d:z, s:")");
 	
 	// Spawn location not known yet, store it.
 	if ((!CheckSpawnLocation(x, y, z, -1))
-		&& (x > 0 || y > 0 || z > 0))
+		&& ((x > 0 || y > 0 || z > 0)
+			|| (x < 0 || y < 0 || z < 0)))
 	{
 		for (int i = 0; i < MAXSPAWNS; i++)
 		{
@@ -1131,8 +1206,7 @@ script DYC_LOGSPAWNSLOCATIONS enter
 				spawnspotsZ[teamNum][i] = z;
 				
 				if (GetCvar("sv_debugmode"))
-					Log(s:teamColors[teamNum], s:"[DEBUG] spawnspot (x: ", 
-					d:x, s:", y: ", d:y, s:", z: ", d:z, s:") saved!");
+					Log(s:teamColors[teamNum], s:"[DEBUG] spawnspot (x: ", d:x, s:", y: ", d:y, s:", z: ", d:z, s:") saved!");
 				
 				break;
 			}
