@@ -45,7 +45,7 @@
 
 #define PLAYR_RESPAWN			1000
 #define PLAYR_DEATH				1001
-#define PLAYR_RESETONDEATH		1002		
+#define PLAYR_RESETONDEATH		1002
 #define PLAYR_ENTER				1003
 #define PLAYR_REENTER			1004
 #define PLAYR_DISCONNECT		1005
@@ -501,7 +501,9 @@ script PLAYR_REENTER ENTER
 			// Extra protection..
 			if (oldTeamNum != teamNum)
 			{	
-				HudMessage(s:"\caYou changed teams whilst being captain on another team >:(!"; HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);
+				HudMessage(s:"\caYou changed teams whilst being captain on another team >:(!"; 
+				HUDMSG_FADEINOUT, PLAYER_MSG1, CR_RED, 0.5, 0.65, 2.0, 0.2, 0.2);
+
 				pickNewCaptain[oldTeamNum] = true;
 			}
 			else
