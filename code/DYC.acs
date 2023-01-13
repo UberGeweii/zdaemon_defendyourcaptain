@@ -15,7 +15,7 @@
 
 ////////////////////////////////////////
 /*
-			=== DEFINES ===
+		=== DEFINES ===
 */
 ////////////////////////////////////////
 
@@ -409,9 +409,12 @@ function bool RespawnPlayer(int player)
 	
 	for (int i = 0; i < MAXSPAWNS; i++)
 	{
-		if (spawnspotsX[teamNum][i] > 0
+		if ((spawnspotsX[teamNum][i] > 0
 			|| spawnspotsY[teamNum][i] > 0
 			|| spawnspotsZ[teamNum][i] > 0)
+				|| (spawnspotsX[teamNum][i] < 0
+			|| spawnspotsY[teamNum][i] < 0
+			|| spawnspotsZ[teamNum][i] < 0))
 		{			
 			helperArray2[curPoolSlot] = i;
 			curPoolSlot++;
@@ -420,9 +423,12 @@ function bool RespawnPlayer(int player)
 	
 	int randNum = zd_rand(0, curPoolSlot);
 	
-	if (spawnspotsX[teamNum][helperArray2[randNum]] > 0
+	if ((spawnspotsX[teamNum][helperArray2[randNum]] > 0
 		|| spawnspotsY[teamNum][helperArray2[randNum]] > 0
 		|| spawnspotsZ[teamNum][helperArray2[randNum]] > 0)
+			|| (spawnspotsX[teamNum][helperArray2[randNum]] < 0
+		|| spawnspotsY[teamNum][helperArray2[randNum]] < 0
+		|| spawnspotsZ[teamNum][helperArray2[randNum]] < 0))
 	{	
 		SetActorPosition(PlayerTag(player), 
 		spawnspotsX[teamNum][helperArray2[randNum]],
@@ -488,12 +494,7 @@ script PLAYR_REENTER ENTER
 	Thing_ChangeTID(SELF, PlayerTag(player)); // tag the player
 	
 	Delay(2); // please keep it here
-/*
-	if (callNewRound)
-		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-	else
-		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-*/		
+	
 	if (gameStarted)
 	{		
 		if (isCaptain(player))
@@ -1205,9 +1206,9 @@ script DYC_LOGSPAWNSLOCATIONS enter
 	{
 		for (int i = 0; i < MAXSPAWNS; i++)
 		{
-			if (spawnspotsX[teamNum][i] <= 0
-				&& spawnspotsY[teamNum][i] <= 0
-				&& spawnspotsZ[teamNum][i] <= 0)
+			if (spawnspotsX[teamNum][i] == 0
+				&& spawnspotsY[teamNum][i] == 0
+				&& spawnspotsZ[teamNum][i] == 0)
 			{
 				spawnspotsX[teamNum][i] = x;
 				spawnspotsY[teamNum][i] = y;
