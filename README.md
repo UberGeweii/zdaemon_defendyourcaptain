@@ -5,7 +5,7 @@ A new team-based gamemode for ZDaemon, it's not been tested with other ports!
 I might make this compatible with Zandronum in the future.
 
 # Gamemode description
-How this it work? Well it's simple! One person of each team gets assigned "the Captain".
+How does this work? Well simple! One person of each team gets assigned "the Captain".
 The others are assigned with the task of defending their captain. Your captain dies? the other team scores!
 A captain can tank a lot more damage than a normal defender. So it'll take some serious effort to bring him down.
 
