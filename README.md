@@ -50,7 +50,7 @@ sv_alwaysnewcaptain (Experimental: always pick a new captain when one gets kille
 
 sv_roundbased (Experimental: mimics ZDaemons' round based system, 0 or 1)
 
-sv_forceteamrespawn (Experimental: requires for sv_roundbased to be set to 1, respawns whole team when round ends)
+sv_forceteamrespawn (Experimental: requires for sv_roundbased to be set to 1, force respawns whole team when round ends and skips all other checks)
 
 sv_newroundonsuicide (Experimental: requires for sv_roundbased to be set to 1, calls a new round when a captain suicides)
 
